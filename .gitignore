@@ -3,4 +3,5 @@
 build/
 bin/
 node_modules/
-vendor/
+vendor/bower/
+.sass-cache/
