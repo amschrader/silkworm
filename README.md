@@ -10,13 +10,13 @@ based on [ng-boilerplate](https://github.com/ngbp/ngbp)
 Install Node.js and then:
 
 ```sh
-$ git clone git://github.com/joshdmiller/ng-boilerplate
-$ cd ng-boilerplate
+$ git clone git://github.com/amschrader/silkworm
+$ cd silkworm
 $ sudo npm -g install grunt-cli karma bower
 $ npm install
 $ bower install
 $ grunt watch
 ```
 
-Finally, open `file:///path/to/ng-boilerplate/build/index.html` in your browser.
+Finally, open `file:///path/to/silkworm/build/index.html` in your browser.
 
