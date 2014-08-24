@@ -12,9 +12,15 @@
     "type": "git",
     "url": "git@github.com:amschrader/silkworm.git"
   },
-  "dependencies": {},
+  "dependencies": {
+    "underscore.string": "2.3.3",
+    "lodash": "2.4.1"
+  },
   "devDependencies": {
+    "aws-sdk": "2.0.0-rc10",
     "grunt": "~0.4.1",
+    "grunt-aws-s3": "0.8.5",
+    "grunt-cloudfront": "0.1.1",
     "grunt-contrib-less": "~0.11.0",
     "grunt-contrib-clean": "^0.4.1",
     "grunt-contrib-copy": "^0.4.1",
@@ -34,6 +40,7 @@
     "karma-jasmine": "^0.1.5",
     "grunt-karma": "^0.8.2",
     "karma-coffee-preprocessor": "^0.2.1",
-    "karma": "^0.12.9"
+    "karma": "^0.12.9",
+    "underscore": "1.6.0"
   }
 }

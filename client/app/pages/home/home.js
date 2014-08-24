@@ -13,8 +13,7 @@
  * specified, as shown below.
  */
 angular.module( 'silkworm.home', [
-  'ui.router',
-  'plusOne'
+  'ui.router'
 ])
 
 /**

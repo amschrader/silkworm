@@ -1,4 +1,12 @@
 module.exports = function ( grunt ) {
+  fs = require('fs');
+  var amazonCreds;
+
+  try {
+    amazonCreds = JSON.parse(fs.readFileSync('keys/aws.json', 'utf8'));
+  } catch (e) {
+    amazonCreds = {};
+  }
 
   /**
    * Load required Grunt tasks. These are installed based on the versions listed
@@ -19,6 +27,8 @@ module.exports = function ( grunt ) {
   grunt.loadNpmTasks('grunt-karma');
   grunt.loadNpmTasks('grunt-ngmin');
   grunt.loadNpmTasks('grunt-html2js');
+  grunt.loadNpmTasks('grunt-aws-s3');
+  grunt.loadTasks('tasks');
 
   /**
    * Load in our build configuration file.
@@ -59,6 +69,35 @@ module.exports = function ( grunt ) {
       options: {
         dest: 'CHANGELOG.md',
         template: 'changelog.tpl'
+      }
+    },
+
+    /**
+     * Upload to Amazon S3
+     */
+    aws_s3: {
+      options: {
+        accessKeyId: amazonCreds.accessKeyId,
+        secretAccessKey: amazonCreds.secretAccessKey,
+        bucket: 'www.slkwrrm.com',
+        maxRetries: 3,
+        access: 'public-read',
+        region: 'us-west-2'
+      },
+      release: {
+        expand: true,
+        cwd: '<%= compile_dir %>',
+        src: ['**'],
+        dest: ''
+      },
+      test: {
+        options: {
+          bucket: 'test.slkwrrm.com'
+        },
+        expand: true,
+        cwd: '<%= compile_dir %>',
+        src: ['**'],
+        dest: ''
       }
     },
 
@@ -104,7 +143,7 @@ module.exports = function ( grunt ) {
           {
             src: [ '**' ],
             dest: '<%= build_dir %>/assets/',
-            cwd: 'src/assets',
+            cwd: 'client/assets',
             expand: true
           }
        ]
@@ -178,7 +217,7 @@ module.exports = function ( grunt ) {
         src: [
           '<%= vendor_files.js %>',
           'module.prefix',
-          '<%= build_dir %>/src/**/*.js',
+          '<%= build_dir %>/client/**/*.js',
           '<%= html2js.app.dest %>',
           '<%= html2js.common.dest %>',
           'module.suffix'
@@ -261,6 +300,7 @@ module.exports = function ( grunt ) {
       }
     },
 
+
     /**
      * `jshint` defines the rules of our linter as well as which files we
      * should check. This file, all javascript sources, and all our unit tests
@@ -321,7 +361,7 @@ module.exports = function ( grunt ) {
        */
       app: {
         options: {
-          base: 'src/app'
+          base: 'client/app'
         },
         src: [ '<%= app_files.atpl %>' ],
         dest: '<%= build_dir %>/templates-app.js'
@@ -332,7 +372,7 @@ module.exports = function ( grunt ) {
        */
       common: {
         options: {
-          base: 'src/common'
+          base: 'client/common'
         },
         src: [ '<%= app_files.ctpl %>' ],
         dest: '<%= build_dir %>/templates-common.js'
@@ -371,7 +411,7 @@ module.exports = function ( grunt ) {
         dir: '<%= build_dir %>',
         src: [
           '<%= vendor_files.js %>',
-          '<%= build_dir %>/src/**/*.js',
+          '<%= build_dir %>/client/**/*.js',
           '<%= html2js.common.dest %>',
           '<%= html2js.app.dest %>',
           '<%= vendor_files.css %>',
@@ -389,7 +429,7 @@ module.exports = function ( grunt ) {
         src: [
           '<%= concat.compile_js.dest %>',
           '<%= vendor_files.css %>',
-          '<%= build_dir %>/assets/<%= pkg.name %>-<%= pkg.version %>.css'
+          '<%= build_dir %>/assets/main.css'
         ]
       }
     },
@@ -499,8 +539,8 @@ module.exports = function ( grunt ) {
        * When the CSS files change, we need to compile and minify them.
        */
       scss: {
-        files: [ 'src/**/*.scss' ],
-        tasks: [ 'scss:build' ]
+        files: [ 'client/**/*.scss' ],
+        tasks: [ 'compass:build']
       },
 
       /**
@@ -565,9 +605,23 @@ module.exports = function ( grunt ) {
    * minifying your code.
    */
   grunt.registerTask( 'compile', [
-    'scss:compile', 'copy:compile_assets', 'ngmin', 'concat:compile_js', 'uglify', 'index:compile'
+    'compass:compile', 'concat:build_css', 'copy:compile_assets', 'ngmin', 'concat:compile_js', 'uglify', 'index:compile'
   ]);
 
+
+  grunt.registerTask('upload:prod', [
+    'upload:prod:noBump'
+  ]);
+
+  grunt.registerTask('upload:test', [
+    'compile',
+    'aws_s3:test'
+  ]);
+
+  grunt.registerTask('upload:prod:noBump', [
+    'compile',
+    'aws_s3:release'
+  ]);
   /**
    * A utility function to get all app JavaScript sources.
    */
@@ -601,7 +655,7 @@ module.exports = function ( grunt ) {
       return file.replace( dirRE, '' );
     });
 
-    grunt.file.copy('src/index.html', this.data.dir + '/index.html', {
+    grunt.file.copy('client/index.html', this.data.dir + '/index.html', {
       process: function ( contents, path ) {
         return grunt.template.process( contents, {
           data: {
